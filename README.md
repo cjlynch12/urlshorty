@@ -6,5 +6,5 @@ by Carter Lynch
 
 Made with the FCC backend boilderplate and hosted on Glitch.
 
-See a live demo at [glitch](https://cjl12-urlshort.glitch.me).
+See a live demo at [glitch](https://cjl12-urlshorty.glitch.me).
 
