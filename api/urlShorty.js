@@ -6,70 +6,56 @@ var shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 var validUrl = require('valid-url');
 
-
 module.exports = function (app) {
+  
 //gen shortlink
 app.route('/new/:url(*)')
   .get(function(req,res){
   mongo.MongoClient.connect(process.env.MLAB_URI, function(err,db){
-    if (err) {
-      console.log('Error connecting to server');
-      throw err;
-    } else {
-      console.log('Connected to server');
-    }
+    if (err) throw err;
     var collection = db.collection('urls');
-    var params = req.params.url;
-    var local = req.get('host') + "/";
+    var rootUrl = req.params.url;
+    var hostName = req.get('host') + "/";
     var genShortLink = function(db, callback) {
-      collection.findOne({ "url": params},function (err, doc){
+      collection.findOne({ "url": rootUrl},function (err, doc){
         if (doc != null) {
-          res.json({full_url : params, short_url: local + doc.short});
+          res.json({full_url : rootUrl, short_url: hostName + doc.short});
         } else {
           var newShortId = shortid.generate();
-          var shortUrl = {url: params, short: newShortId};
-          collection.insert([shortUrl]);
-          res.json({original_url: params, short_url: local + newShortId});
+          collection.insert({url: rootUrl, short: newShortId});
+          res.json({original_url: rootUrl, short_url: hostName + newShortId});
         };
       });
     };
-    if (validUrl.isUri(params)){
+    if (validUrl.isUri(rootUrl)){
        genShortLink(db, function(){
          db.close();
        });
     } else {
-      res.sendFile(process.cwd() + '/views/invalidUrl.html');
+      res.json({error: 'Please enter a valid URL (HTTP://...)'});
     }
   });  
 });
+  
 //lookup
 app.route('/:lookUpId')
   .get(function(req,res){
-  
   mongo.MongoClient.connect(process.env.MLAB_URI, function(err,db){
-      if (err) {
-        console.log('Error connecting to server');
-        throw err;
-      } else {
-        console.log('connected to server');
-        var collection = db.collection('urls');
-        var params = req.params.lookUpId;
-      
-        var lookup = function(db, callback) {
-          collection.findOne({"short": params}, function(err,doc){
-          if (doc != null) {
-            res.redirect(doc.url);
-          } else {
-            res.json({error: "Could not find shortlink in the database"});
-          };
-        });
-      };
-      
+      if (err) throw err;
+      var collection = db.collection('urls');
+      var lookUpId = req.params.lookUpId;
+      var lookup = function(db, callback) {
+      collection.findOne({"short": lookUpId}, function(err,doc){
+        if (doc != null) {
+          res.redirect(doc.url);
+        } else {
+          res.json({error: "Could not find shortlink in the database"});
+        };
+      });
+  };
       lookup(db,function() {
         db.close();
-      });
-        
-    };  
+      }); 
   });
 });
   

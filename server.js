@@ -8,7 +8,7 @@
 var fs = require('fs');
 var express = require('express');
 var app = express();
-var api = require('./api/urlShorty.js');
+var url_api = require('./api/urlShorty.js');
 require('dotenv').config();
 var mongo = require('mongodb');
 
@@ -47,7 +47,7 @@ app.route('/')
 		  res.sendFile(process.cwd() + '/views/index.html');
     })
 
-api(app);
+url_api(app);
 
 // Respond not found to all the wrong routes
 app.use(function(req, res, next){
